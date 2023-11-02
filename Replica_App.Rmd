@@ -1,0 +1,801 @@
+---
+title: "Replica App Grafico Dinamico"
+author: "Sofía Palacios Cuevas"
+date: "`r Sys.Date()`"
+output: 
+  html_document:                   
+    collapsed: true                # Contraer celdas de salida (creo...)
+    code_folding: show             # Mostrar el código
+    toc: true                      # Mostrar la tabla de contenidos
+    toc_depth: 3                   # Niveles de títulos que se mostrarán
+    toc_float: true                # Índices o contenidos flotantes 
+    smooth_scroll: true            # Activar el scroll
+    highlight: kate                # Destacar
+    df_print: paged                # Mostrar los dataframes en páginas
+    number_sections: true          # Numeración de contenidos
+    theme: simplex                 # Tema
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lectura de la base de datos y visualizaciones rápidas {.tabset}
+
+## Lectura de la base de datos {.tabset}
+
+### Librerías
+```{r librerías para ejemplo accidentes}
+library(shiny)
+library(tidyverse)
+```
+
+### Curado de la base de datos
+Leemos la base de datos
+```{r Creamos un subdirectorio}
+datos_original <- read.csv("bd_lupus_shiny_developm.csv")
+db_lupus<-datos_original[,c(6,26:51,52,53:62,63,85, 86, 130:155)]
+# 6 -> sex
+# 26:51 -> sledai_points (síntomas a partir de lupus), cada columna es un síntoma
+# 52 -> sledai_date
+# 53:62 -> acr_criterion del 1 al 10
+# 63 -> acr_date
+# 85 -> tiempo de diagnóstico
+# 86 -> tiempo desde el primer síntoma
+# 130:155 -> Nivel de satisfacción diferentes cuestiones vida diaria
+
+db_lupus$sex___1<-as.factor(db_lupus$sex___1)
+# 1 = mujer, 0 = hombre
+
+# Cambiamos el nombre de las variables de los síntomas (sledai_points___2)
+db_lupus <-rename(db_lupus, convulsion = sledai_points___1, psicosis = sledai_points___2, cerebro_organico = sledai_points___3,alteracion_visual = sledai_points___4,alteracion_nervios_craneales = sledai_points___5,cafalea_lupica = sledai_points___6,accidente_cerebrovascular = sledai_points___7,vasculitis = sledai_points___8,astritis = sledai_points___9,miositis = sledai_points___10,clindos_urinarios = sledai_points___11, hematuria = sledai_points___12,proteinuria = sledai_points___13,piuria = sledai_points___14,erupcion = sledai_points___15,alopecia = sledai_points___16,ulcera_mucosa = sledai_points___17,pleuresia = sledai_points___18,pericarditis = sledai_points___19,hipocomplemen = sledai_points___20,aumento_union = sledai_points___21,fiebre = sledai_points___22,trombocitopen = sledai_points___23,leucopenia = sledai_points___24,ninguno = sledai_points___25)
+db_lupus <- na.omit(db_lupus)
+
+# Cambiamos el nombre de las variables de los Colegio Americano de Reumatología (acr_criterion)
+db_lupus <- rename(db_lupus, eritema_malar = acr_criterion___1, eritema_discoide = acr_criterion___2, fotosensibilidad = acr_criterion___3, ulceras_orales = acr_criterion___4, artritis_no_erosiva = acr_criterion___5, pleuresia_pericarditis = acr_criterion___6, desorden_renal = acr_criterion___7, desordenes_neurologicos = acr_criterion___8, trastornos_hematopoyetico = acr_criterion___9, desordenes_inmunologicos = acr_criterion___10)
+
+# Cambiamos el nombre de las variables de nivel de satisfacción (brefn, n = 1, 2, ..., 26)
+db_lupus <- rename(db_lupus, calidad_vida = bref1,salud = bref2, imped_por_dolor = bref3, cantidad_medicamento = bref4, disfruta_vida = bref5, vida_sin_sentido = bref6, concentracion = bref7, seguridad = bref8,ambiente_fisico_saludable = bref9,energia_suficiente = bref10,aceptar_apariencia = bref11,dinero_suficiente = bref12,info_disponible = bref13,oportunidad_ocio = bref14,capaz_desplazarse = bref15,sueno = bref16,actividades_diarias = bref17,capaz_trabajo = bref18,si_mismo = bref19,relaciones_personales = bref20,vida_sexual = bref21,apoyo_amigos = bref22,condiciones_vivienda = bref23,acceso_serv_sanitarios = bref24,transporte = bref25,frecuencia_sent_neg = bref26)
+
+write.csv(db_lupus,file='C:/Users/sofia/OneDrive/Documentos/EI7/db_lupus.csv')
+```
+
+### Resumen
+```{r Summary db_lupus}
+summary(db_lupus)
+```
+
+### Exploración de los datos
+```{r Echamos un vistazo al tiempo que ha pasado desde los primeros síntomas que han presentado las personas diagnosticadas con lupus}
+db_lupus %>% 
+  filter(time_symptoms == 2)
+```
+Ahora veamos, cuántas personas han sido diagnosticadas con lupus en los diferentes intervalos que establece la variable del *tiempo de diagnóstico*
+```{r Tiempo de diagnóstico}
+db_lupus %>%
+  count(dx_time, wt = NULL, sort = T)
+```
+Ahora según los síntomas que han experimentado:
+```{r Tiempo desde el primer síntoma}
+db_lupus %>%
+  count(time_symptoms, wt = NULL, sort = T)
+```
+
+Ahora explorarmos las ocurrencias del tiempo *tiempo de diagnóstico* por *sexo*
+```{r Un resumen por sexo y edad}
+dxTime_sex<-db_lupus %>%
+  count(dx_time, sex___1, wt = NULL)
+```
+
+Ahora de forma visual
+```{r Gráfica de incidencia de diagnostico}
+dxTime_sex %>%
+  ggplot(aes(dx_time, n, colour = sex___1))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico por sexo") + 
+  scale_colour_hue(labels = c("Masculino", "Femenino", "Otro")) +
+  guides(colour=guide_legend(title = "Sexo")) +
+  theme_bw()
+```
+
+```{r Gráfica de incidencia de accidentes en USA 2013-2017}
+db_lupus %>%
+  ggplot(aes(dx_time, fill = sex___1))+
+  geom_histogram(position = 'identity', alpha=0.5, binwidth = 6) +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico por sexo") + 
+  scale_colour_hue(labels = c("Masculino", "Femenino", "Otro")) +
+  guides(fill=guide_legend(title = "Sexo")) +
+  theme_bw()
+```
+
+Ahora explorarmos las ocurrencias del algún padecimiento experimentado a partir del diagnóstico (Miositis = inflamación muscular)
+```{r Un resumen por síntomas y sexo}
+miositis_sex<-db_lupus %>%
+  count(miositis, sex___1, wt = NULL)
+```
+Ahora de forma visual (No tiene sentido)
+```{r Grafica de incidencia de miositis por sexo}
+miositis_sex %>%
+  ggplot(aes(miositis, n, colour = sex___1))+
+  geom_point(position = "jitter") +
+  xlab("Sexo") +
+  ylab("Incidencia") +
+  ggtitle("Miositis por sexo") + 
+  scale_colour_hue(labels = c("Masculino", "Femenino", "Otro")) +
+  guides(colour=guide_legend(title = "Sexo")) +
+  theme_bw()
+```
+
+# Gráficas {.tabset}
+
+En esta sección se presentan los gráficos estáticos que queremos introducir a un ambiente reactivo, de modo que el usuario pueda escoger algún tema relacionado con la calidad de vida y vea cómo es la calidad de vida en pacientes con lupus, según el tiempo de daignótico que tienen. Podría ayudarles a entender qué esperar de la enfermedad en los próximos años.
+
+## Gráficas tiempo de diagnóstico - calidad de vida {.tabset}
+Ahora explorarmos que tan satisfechos están con su vida, según el tiempo de diagnóstico
+
+### Calidad de vida
+¿Cómo puntuaría su calidad de vida?
+
+```{r dx_time - calidad de vida}
+dxTime_calidad_vida<-db_lupus %>%
+  count(dx_time, calidad_vida, wt = NULL)
+
+dxTime_calidad_vida$calidad_vida<-as.factor(dxTime_calidad_vida$calidad_vida)
+```
+
+```{r Grafica de diagnostico y calidad de vida}
+dxTime_calidad_vida %>%
+  ggplot(aes(dx_time, n, colour = calidad_vida))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y calidad de vida") + 
+  scale_colour_hue(labels = c("Mala", "Normal", "Buena", "Muy buena")) + #Checar base de datos (0 personas con "muy mala"?)
+  guides(colour=guide_legend(title = "¿Cómo puntuaría su calidad de vida?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de los pacientes respecto a su calidad de vida, según el tiempo de diagnóstico.
+
+### Salud
+¿Cuán satisfecho está con su salud?
+
+```{r dx_time - salud}
+dxTime_salud<-db_lupus %>%
+  count(dx_time, salud, wt = NULL)
+
+dxTime_salud$salud<-as.factor(dxTime_salud$salud)
+```
+
+```{r Grafica dx_time - calidad de vida}
+dxTime_salud %>%
+  ggplot(aes(dx_time, n, colour = salud))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y salud") + 
+  scale_colour_hue(labels = c("Muy insatisfecho", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está con su salud?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de los pacientes respecto a su salud, según el tiempo de diagnóstico.
+
+### Impedimento por dolor
+¿Hasta qué punto piensa que el dolor (físico) le impide hacer lo
+que necesita? - En las últimas semas
+
+```{r dx_time - imped_por_dolor}
+dxTime_imped_por_dolor<-db_lupus %>%
+  count(dx_time, imped_por_dolor, wt = NULL)
+
+dxTime_imped_por_dolor$imped_por_dolor<-as.factor(dxTime_imped_por_dolor$imped_por_dolor)
+```
+
+```{r Grafica dx_time - imped_por_dolor}
+dxTime_imped_por_dolor %>%
+  ggplot(aes(dx_time, n, colour = imped_por_dolor))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico e impedimento por dolor") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) +
+  guides(colour=guide_legend(title = "En las últimas semanas ¿Hasta qué
+punto piensa que el dolor (físico) le
+impide hacer lo que necesita?")) +
+  theme_bw()
+```
+
+Esta gráfica indica la incidencia del nivel de impedimento que el dolor causa en los pacientes, con determinado tiempo de diagnóstico,  para realizar sus actividades diarias.
+
+### Cantidad de medicamento
+En las últimas semanas ¿Cuánto necesita de cualquier tratamiento médico para funcionar en su vida diaria?
+
+```{r dx_time - cantidad_medicamento}
+dxTime_cantidad_medicamento<-db_lupus %>%
+  count(dx_time, cantidad_medicamento, wt = NULL)
+
+dxTime_cantidad_medicamento$cantidad_medicamento<-as.factor(dxTime_cantidad_medicamento$cantidad_medicamento)
+```
+
+```{r Grafica dx_time - cantidad_medicamento}
+dxTime_cantidad_medicamento %>%
+  ggplot(aes(dx_time, n, colour = cantidad_medicamento))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y cantidad de medicamento") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) +
+  guides(colour=guide_legend(title = "En las últimas semanas ¿Cuánto necesita
+de cualquier tratamiento médico para 
+funcionar en su vida diaria?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuánto medicamento debe utilizar un paciente para realizar sus actividades diarias, según el tiempo de diagnóstico.
+
+### ¿Disfruta su vida?
+¿Cuánto disfruta de la vida?
+
+```{r dx_time - disfruta_vida}
+dxTime_disfruta_vida<-db_lupus %>%
+  count(dx_time, disfruta_vida, wt = NULL)
+
+dxTime_disfruta_vida$disfruta_vida<-as.factor(dxTime_disfruta_vida$disfruta_vida)
+```
+
+```{r Grafica dx_time - disfruta_vida}
+dxTime_disfruta_vida %>%
+  ggplot(aes(dx_time, n, colour = disfruta_vida))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y disfrute vida") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) +
+  guides(colour=guide_legend(title = "¿Cuánto disfruta de
+la vida?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de los pacientes respecto a su vida, según el tiempo de diagnóstico.
+
+### Sentido de la vida
+¿Hasta que punto siente que su vida tiene sentido?
+
+```{r dx_time - vida_sin_sentido}
+dxTime_vida_sin_sentido<-db_lupus %>%
+  count(dx_time, vida_sin_sentido, wt = NULL)
+
+dxTime_vida_sin_sentido$vida_sin_sentido<-as.factor(dxTime_vida_sin_sentido$vida_sin_sentido)
+```
+
+```{r Grafica dx_time - vida_sin_sentido}
+dxTime_vida_sin_sentido %>%
+  ggplot(aes(dx_time, n, colour = vida_sin_sentido))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y disfrute vida") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) +
+  guides(colour=guide_legend(title = "¿Hasta que punto
+siente que su vida 
+tiene sentido?")) +
+  theme_bw()
+```
+
+Esta gráfica indica hasta qué punto los pacientes sienten que su vida tiene sentido, según el tiempo de diagnóstico.
+
+### Concentración
+¿Cuál es su capacidad de concentración?
+
+```{r dx_time - concentracion}
+dxTime_concentracion<-db_lupus %>%
+  count(dx_time, concentracion, wt = NULL)
+
+dxTime_concentracion$concentracion<-as.factor(dxTime_concentracion$concentracion)
+```
+
+```{r Grafica dx_time - concentracion}
+dxTime_concentracion %>%
+  ggplot(aes(dx_time, n, colour = concentracion))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y sentido de la vida") + 
+  scale_colour_hue(labels = c("Nada","Poco", "Normal", "Mucho", "Extremadamente")) + # empieza en 2
+  guides(colour=guide_legend(title = "¿Cuál es su capacidad
+de concentración?")) +
+  theme_bw()
+```
+
+Esta gráfica indica a qué nivel se pueden concentrar los pacientes, según el tiempo de diagnóstico.
+
+### Seguridad
+¿Cuánta seguridad siente en su vida diaria?
+
+```{r dx_time - seguridad}
+dxTime_seguridad<-db_lupus %>%
+  count(dx_time, seguridad, wt = NULL)
+
+dxTime_seguridad$seguridad<-as.factor(dxTime_seguridad$seguridad)
+```
+
+```{r Grafica dx_time - seguridad}
+dxTime_seguridad %>%
+  ggplot(aes(dx_time, n, colour = seguridad))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y seguridad") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) +
+  guides(colour=guide_legend(title = "¿Cuánta seguridad 
+siente en su vida diaria?")) +
+  theme_bw()
+```
+
+Esta gráfica indica qué tan seguros se sienten los pacientes en su día a día, según el tiempo de diagnóstico.
+
+### Ambiente físico saludable
+¿Cuán saludable es el ambiente físico a su alrededor?
+
+```{r dx_time - ambiente_fisico_saludable}
+dxTime_ambiente_fisico_saludable<-db_lupus %>%
+  count(dx_time, ambiente_fisico_saludable, wt = NULL)
+
+dxTime_ambiente_fisico_saludable$ambiente_fisico_saludable<-as.factor(dxTime_ambiente_fisico_saludable$ambiente_fisico_saludable)
+```
+
+```{r Grafica dx_time - ambiente_fisico_saludable}
+dxTime_ambiente_fisico_saludable %>%
+  ggplot(aes(dx_time, n, colour = ambiente_fisico_saludable))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y ambiente físico saludable") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) + # Empieza en 2
+  guides(colour=guide_legend(title = "¿Cuán saludable es el
+ambiente físico a su alrededor?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuántos pacientes consideran que tienen un ambiente físico nada, poco, normal, muy o extremadamente saludable a su alrededor.
+
+### Capacidad para desplazarse
+¿Es capaz de desplazarse de un lugar a otro?
+
+```{r dx_time - capaz_desplazarse}
+dxTime_capaz_desplazarse<-db_lupus %>%
+  count(dx_time, capaz_desplazarse, wt = NULL)
+
+dxTime_capaz_desplazarse$capaz_desplazarse<-as.factor(dxTime_capaz_desplazarse$capaz_desplazarse)
+```
+
+```{r Grafica dx_time - capaz_desplazarse}
+dxTime_capaz_desplazarse %>%
+  ggplot(aes(dx_time, n, colour = capaz_desplazarse))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y capacidad para desplazarse") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")) + # Empieza en 2
+  guides(colour=guide_legend(title = "¿Es capaz de desplazarse
+de un lugar a otro?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuántos pacientes se consideran nada, poco, normal, muy o extremadamente capaces de desplazarse, según el tiempo de diagnóstico.
+
+### Suficiente energía
+¿Tiene energía suficiente para su vida diaria?
+
+```{r dx_time - energia_suficiente}
+dxTime_energia_suficiente<-db_lupus %>%
+  count(dx_time, energia_suficiente, wt = NULL)
+
+dxTime_energia_suficiente$energia_suficiente<-as.factor(dxTime_energia_suficiente$energia_suficiente)
+```
+
+```{r Grafica dx_time - energia_suficiente}
+dxTime_energia_suficiente %>%
+  ggplot(aes(dx_time, n, colour = energia_suficiente))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y energía para la vida") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")) +
+  guides(colour=guide_legend(title = "¿Tiene energía suficiente
+para su vida diaria?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuántos pacientes consideran que tienen nada, poco, moderado, suficiente o total energía para su vida diaria, según el tiempo de diagnóstico.
+
+### Aceptación de la apariencia
+¿Es capaz de aceptar su apariencia física?
+
+```{r dx_time - aceptar_apariencia}
+dxTime_aceptar_apariencia<-db_lupus %>%
+  count(dx_time, aceptar_apariencia, wt = NULL)
+
+dxTime_aceptar_apariencia$aceptar_apariencia<-as.factor(dxTime_aceptar_apariencia$aceptar_apariencia)
+```
+
+```{r Grafica dx_time - aceptar_apariencia}
+dxTime_aceptar_apariencia %>%
+  ggplot(aes(dx_time, n, colour = aceptar_apariencia))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y aceptación de la apariencia") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")) +
+  guides(colour=guide_legend(title = "¿Es capaz de aceptar
+su apariencia física?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuántos pacientes se consideran nada, poco, moderado, suficiente o totalmente capaces de aceptar su apariencia física, según el tiempo de diagnóstico.
+
+### Suficiente dinero
+¿Tiene suficiente dinero para cubrir sus necesidades?
+
+```{r dx_time - dinero_suficiente}
+dxTime_dinero_suficiente<-db_lupus %>%
+  count(dx_time, dinero_suficiente, wt = NULL)
+
+dxTime_dinero_suficiente$dinero_suficiente<-as.factor(dxTime_dinero_suficiente$dinero_suficiente)
+```
+
+```{r Grafica dx_time - dinero_suficiente}
+dxTime_dinero_suficiente %>%
+  ggplot(aes(dx_time, n, colour = dinero_suficiente))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y dinero suficiente") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")) +
+  guides(colour=guide_legend(title = "¿Tiene suficiente dinero
+para cubrir sus necesidades?")) +
+  theme_bw()
+```
+
+Esta gráfica indica cuántos pacientes tienen nada, poco, moderado, suficiente o total solvencia económica para cubrir sus necesidades, según el tiempo de diagnóstico.
+
+###  Información disponible
+¿Qué disponible tiene la información que necesita en su vida diaria?
+
+```{r dx_time - info_disponible}
+dxTime_info_disponible<-db_lupus %>%
+  count(dx_time, info_disponible, wt = NULL)
+
+dxTime_info_disponible$info_disponible<-as.factor(dxTime_info_disponible$info_disponible)
+```
+
+```{r Grafica dx_time - info_disponible}
+dxTime_info_disponible %>%
+  ggplot(aes(dx_time, n, colour = info_disponible))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico e información disponible") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Qué disponible tiene la
+información que necesita
+en su vida diaria?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el grado de información disponible necesaria en la vida diaria del sujeto, relacionada con el tiempo de diagnóstico.
+
+###  Oportunidad de ocio
+¿Hasta qué punto tiene oportunidad para realizar actividades de ocio?
+
+```{r dx_time - oportunidad_ocio}
+dxTime_oportunidad_ocio<-db_lupus %>%
+  count(dx_time, oportunidad_ocio, wt = NULL)
+
+dxTime_oportunidad_ocio$oportunidad_ocio<-as.factor(dxTime_oportunidad_ocio$oportunidad_ocio)
+```
+
+```{r Grafica dx_time - oportunidad_ocio}
+dxTime_oportunidad_ocio %>%
+  ggplot(aes(dx_time, n, colour = oportunidad_ocio))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y tiempo de ocio") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Hasta qué punto tiene 
+oportunidad para realizar
+actividades de ocio?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el grado de oportunidad que tiene una persona para poder realizar actividades de ocio, relacionado con el tiempo de diagnóstico.
+
+###  Sueño
+¿Cuán satisfecho está con su sueño?
+
+```{r dx_time - sueno}
+dxTime_sueno<-db_lupus %>%
+  count(dx_time, sueno, wt = NULL)
+
+dxTime_sueno$sueno<-as.factor(dxTime_sueno$sueno)
+```
+
+```{r Grafica dx_time - sueno}
+dxTime_sueno %>%
+  ggplot(aes(dx_time, n, colour = sueno))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y sueño") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está 
+con su sueño?
+")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de una persona con respecto a su sueño, mismo que se responde tomando en cuenta la calidad, horas de sueño, entre otros factores, relacionado con el tiempo de diagnóstico.
+
+###  Actividades diarias
+¿Cuán satisfecho está con su habilidad para realizar sus actividades de la vida diaria?
+
+```{r dx_time - actividades_diarias}
+dxTime_actividades_diarias<-db_lupus %>%
+  count(dx_time, actividades_diarias, wt = NULL)
+
+dxTime_actividades_diarias$actividades_diarias<-as.factor(dxTime_actividades_diarias$actividades_diarias)
+```
+
+```{r Grafica dx_time - actividades_diarias}
+dxTime_actividades_diarias %>%
+  ggplot(aes(dx_time, n, colour = actividades_diarias))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y actividades diarias") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está con 
+su habilidad para realizar sus
+actividades de la vida diaria?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de una persona con su habilidad para realizar sus actividades de la vida diaria, relacionado con el tiempo de diagnóstico.
+
+###  Capacidad de trabajo
+¿Cuán satisfecho está con su capacidad de trabajo?
+
+```{r dx_time - capaz_trabajo}
+dxTime_capaz_trabajo<-db_lupus %>%
+  count(dx_time, capaz_trabajo, wt = NULL)
+
+dxTime_capaz_trabajo$capaz_trabajo<-as.factor(dxTime_capaz_trabajo$capaz_trabajo)
+```
+
+```{r Grafica dx_time - capaz_trabajo}
+dxTime_capaz_trabajo %>%
+  ggplot(aes(dx_time, n, colour = capaz_trabajo))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y capacidad de trabajar") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está con 
+su capacidad en el trabajo?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el grado de satisfacción de la persona, relacionado a su capacidad de trabajo, relacionado con el tiempo de diagnóstico.
+
+### Satisfacción de si mismo
+¿Cuán satisfecho está de sí mismo?
+
+```{r dx_time - si_mismo}
+dxTime_si_mismo<-db_lupus %>%
+  count(dx_time, si_mismo, wt = NULL)
+
+dxTime_si_mismo$si_mismo<-as.factor(dxTime_si_mismo$si_mismo)
+```
+
+```{r Grafica dx_time - si_mismo}
+dxTime_si_mismo %>%
+  ggplot(aes(dx_time, n, colour = si_mismo))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y satisfacción de sí mismo") + 
+  scale_colour_hue(labels = c("Nunca", "Raramente", "Medianamente", "Frecuentemente", "Siempre")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está 
+de sí mismo?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de auto satisfacción del individuo, relacionado con el tiempo de diagnóstico.
+
+### Relaciones personales
+¿Cuán satisfecho está con sus relaciones personales?
+
+```{r dx_time - relaciones_personales}
+dxTime_relaciones_personales<-db_lupus %>%
+  count(dx_time, relaciones_personales, wt = NULL)
+
+dxTime_relaciones_personales$relaciones_personales<-as.factor(dxTime_relaciones_personales$relaciones_personales)
+```
+
+```{r Grafica dx_time - relaciones_personales}
+dxTime_relaciones_personales %>%
+  ggplot(aes(dx_time, n, colour = relaciones_personales))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y relaciones personales") + 
+  scale_colour_hue(labels = c("Nunca", "Raramente", "Medianamente", "Frecuentemente", "Siempre")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está con 
+sus relaciones personales?")) +
+  theme_bw()
+```
+
+Esta gráfica indica qué tan satisfecha está la persona con las relaciones personales que ha formado, relacionada con el tiempo de diagnóstico.
+
+### Vida sexual
+¿Cuán satisfecho está con su vida sexual?
+
+```{r dx_time - vida_sexual}
+dxTime_vida_sexual<-db_lupus %>%
+  count(dx_time, vida_sexual, wt = NULL)
+
+dxTime_vida_sexual$vida_sexual<-as.factor(dxTime_vida_sexual$vida_sexual)
+```
+
+```{r Grafica dx_time - vida_sexual}
+dxTime_vida_sexual %>%
+  ggplot(aes(dx_time, n, colour = vida_sexual))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y vida sexual") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está
+con su vida sexual?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de las personas con su vida sexual, dependiendo del tiempo de diagnóstico.
+
+### Apoyo de los amigos
+¿Cuán satisfecho está con el apoyo que obtiene de sus amigos?
+
+```{r dx_time - apoyo_amigos}
+dxTime_apoyo_amigos<-db_lupus %>%
+  count(dx_time, apoyo_amigos, wt = NULL)
+
+dxTime_apoyo_amigos$apoyo_amigos<-as.factor(dxTime_apoyo_amigos$apoyo_amigos)
+```
+
+```{r Grafica dx_time - apoyo_amigos}
+dxTime_apoyo_amigos %>%
+  ggplot(aes(dx_time, n, colour = apoyo_amigos))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y apoyo de amigos") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está
+con el apoyo que obtiene
+de sus amigos?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de las personas con el apoyo que han recibido de sus amigos, dependiendo del tiempo de diagnóstico.
+
+### Condiciones de vivienda
+¿Cuán satisfecho está de las condiciones del lugar donde vive?
+
+```{r dx_time - condiciones_vivienda}
+dxTime_condiciones_vivienda<-db_lupus %>%
+  count(dx_time, condiciones_vivienda, wt = NULL)
+
+dxTime_condiciones_vivienda$condiciones_vivienda<-as.factor(dxTime_condiciones_vivienda$condiciones_vivienda)
+```
+
+```{r Grafica dx_time - condiciones_vivienda}
+dxTime_condiciones_vivienda %>%
+  ggplot(aes(dx_time, n, colour = condiciones_vivienda))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y condiciones de vivienda") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está
+de las condiciones del
+lugar donde vive?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de las personas con sus condiciones de vivienda, dependiendo del tiempo de diagnóstico del padecimiento.
+
+### Acceso a servicios sanitarios
+¿Cuán satisfecho está con el acceso que tiene a los servicios
+sanitarios?
+
+```{r dx_time - acceso_serv_sanitarios}
+dxTime_acceso_serv_sanitarios<-db_lupus %>%
+  count(dx_time, acceso_serv_sanitarios, wt = NULL)
+
+dxTime_acceso_serv_sanitarios$acceso_serv_sanitarios<-as.factor(dxTime_acceso_serv_sanitarios$acceso_serv_sanitarios)
+```
+
+```{r Grafica dx_time - acceso_serv_sanitarios}
+dxTime_acceso_serv_sanitarios %>%
+  ggplot(aes(dx_time, n, colour = acceso_serv_sanitarios))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y acceso a servicios sanitarios") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está con
+el acceso que tiene a los
+servicios sanitarios?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de las personas con el acceso a servicios sanitarios, dependiendo del tiempo de diagnóstico.
+
+### Transporte
+¿Cuán satisfecho está con su transporte?
+
+```{r dx_time - transporte}
+dxTime_transporte<-db_lupus %>%
+  count(dx_time, transporte, wt = NULL)
+
+dxTime_transporte$transporte<-as.factor(dxTime_transporte$transporte)
+```
+
+```{r Grafica dx_time - transporte}
+dxTime_transporte %>%
+  ggplot(aes(dx_time, n, colour = transporte))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y transporte") + 
+  scale_colour_hue(labels = c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")) +
+  guides(colour=guide_legend(title = "¿Cuán satisfecho está
+con su transporte?")) +
+  theme_bw()
+```
+
+Esta gráfica indica el nivel de satisfacción de las personas con sus medios de transporte, dependiendo del tiempo de diagnóstico.
+
+### Frencuencia de setimientos negativos
+¿Con qué frecuencia tiene sentimientos negativos , tales como tristeza, desesperanza, ansiedad, depresión?
+
+```{r dx_time - frecuencia_sent_neg}
+dxTime_frecuencia_sent_neg<-db_lupus %>%
+  count(dx_time, frecuencia_sent_neg, wt = NULL)
+
+dxTime_frecuencia_sent_neg$frecuencia_sent_neg<-as.factor(dxTime_frecuencia_sent_neg$frecuencia_sent_neg)
+```
+
+```{r Grafica dx_time - frecuencia_sent_neg}
+dxTime_frecuencia_sent_neg %>%
+  ggplot(aes(dx_time, n, colour = frecuencia_sent_neg))+
+  geom_point(position = "jitter") +
+  xlab("Tiempo de diagnóstico (años)") +
+  ylab("Incidencia") +
+  ggtitle("Tiempo de diagnóstico y aentimientos negativos") + 
+  scale_colour_hue(labels = c("Nunca", "Raramente", "Medianamente", "Frecuentemente", "Siempre")) +
+  guides(colour=guide_legend(title = "¿Con qué frecuencia tiene
+sentimientos negativos,
+tales como tristeza,
+desesperanza, ansiedad,
+depresión?")) +
+  theme_bw()
+```
+
+Esta gráfica indica la frecuencia de presentar sentimientos negativos (tristeza, desesperanza, ansiedad, depresión), dependiendo del tiempo de diagnóstico.
