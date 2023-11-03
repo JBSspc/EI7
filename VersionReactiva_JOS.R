@@ -1,6 +1,7 @@
 # Cargamos los paquetes ------------------------------
 library(shiny)
 library(ggplot2)
+library(dplyr)
 
 # Cargamos los datos ---------------------------------
 load("db_lupus_cv.RData")
@@ -13,20 +14,9 @@ ui <- fluidPage(
     # Entradas
     sidebarPanel(
       selectInput(
-        inputId = "pregunta_calidad_vida", # Pregunta de calidad de vida
+        inputId = "variable", # Pregunta de calidad de vida
         label = "Aspecto relacionado con la calidad de vida: ",
-        choices = c("Calidad de vida", "Salud", "Impedimento por dolor",
-                    "Cantidad de medicamento", "Disfrutar la vida",
-                    "Sentido de la vida", "Concentración", "Seguridad",
-                    "Ambiente físico saludable", "Capacidad para desplazarse",
-                    "Suficiente energía", "Aceptación de la apariencia",
-                    "Suficiente dinero", "Información disponible",
-                    "Oportunidad de ocio", "Sueño", "Actividades diarias",
-                    "Capacidad de trabajo", "Satisfacción de uno mismo",
-                    "Relaciones personales", "Vida sexual", " Apoyo de los amigos",
-                    "Condiciones de vivienda", "Acceso a servicios sanitarios",
-                    "Transporte", "Frecuencia de sentimientos negativos"),
-        selected = "Calidad de vida"
+        choices = colnames(rdata[,43:68])
       ),
     ),
     # Salidas
