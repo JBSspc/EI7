@@ -21,16 +21,28 @@ ui <- fluidPage(
     ),
     # Salidas
     mainPanel(
-    plotOutput(outputId = "scatterplot")
+    plotOutput(outputId = "plot")
     )
   )
 )
 
 # Definir el servidor ------------------------------
 server <-function(input, output, session){
-  output$scatterplot <- renderPlot({
-    ggplot(data=, aes_string(x=input$x, y = input$y))+
-      geom_point()
+  reactive_data <- reactive({
+    rdata %>%
+      count(dx_time, .data[[input$variable]], wt = NULL)
+  })
+  
+  output$plot <- renderPlot({
+    data <- reactive_data()
+    ggplot(data, aes(dx_time, n, colour = .data[[input$variable]]) +
+     geom_point(position = "jitter") +
+     xlab("Tiempo de diagnóstico (años)") +
+     ylab("Incidencia") +
+     ggtitle("Tiempo de diagnóstico por " + input$variable) +
+     scale_colour_hue(labels = c("Masculino", "Femenino", "Otro")) +
+     guides(colour = guide_legend(title = input$variable)) +
+     theme_bw()
   })
 }
 
