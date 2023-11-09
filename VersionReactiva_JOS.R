@@ -26,8 +26,8 @@ ui <- fluidPage(
   )
 )
 
-# Definir el servidor ------------------------------
-server <-function(input, output, session){
+# Definir el server -----------------------------------
+server <- function(input, output) {
   reactive_data <- reactive({
     rdata %>%
       count(dx_time, .data[[input$variable]], wt = NULL)
@@ -35,15 +35,16 @@ server <-function(input, output, session){
   
   output$plot <- renderPlot({
     data <- reactive_data()
-    data$data[[input$variable]]<-as.factor(data[[input$variable]]) # Aquí está el progblema
-    ggplot(data, aes(dx_time, n, colour = data[[input$variable]]) +
-       geom_point(position = "jitter") +
-       xlab("Tiempo de diagnóstico (años)") +
-       ylab("Incidencia") +
-       ggtitle("Tiempo de diagnóstico por " + input$variable) +
-       #scale_colour_hue(labels = c("Masculino", "Femenino", "Otro")) +
-       guides(colour = guide_legend(title = input$variable)) +
-       theme_bw())
+    data$calidad_vida <- as.factor(data[[input$variable]])
+    
+    ggplot(data, aes(dx_time, n, colour = calidad_vida)) +
+      geom_point(position = "jitter") +
+      xlab("Tiempo de diagnóstico (años)") +
+      ylab("Incidencia") +
+      ggtitle(paste("Tiempo de diagnóstico y", input$variable)) +
+      scale_colour_hue(labels = c("Mala", "Normal", "Buena", "Muy buena")) +
+      guides(colour = guide_legend(title = paste("¿Cómo puntuaría su", input$variable, "?"))) +
+      theme_bw()
   })
 }
 
