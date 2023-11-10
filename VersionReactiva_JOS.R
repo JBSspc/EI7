@@ -26,7 +26,7 @@ ui <- fluidPage(
   )
 )
 
-# Definir el server -----------------------------------
+# Definir el servidor -----------------------------------
 server <- function(input, output) {
   reactive_data <- reactive({
     rdata %>%
@@ -44,7 +44,7 @@ server <- function(input, output) {
       ggtitle(paste("Tiempo de diagnóstico y", input$variable)) +
       scale_colour_hue(labels = c("Mala", "Normal", "Buena", "Muy buena")) +
       guides(colour = guide_legend(title = paste("¿Cómo puntuaría su", input$variable, "?"))) +
-      theme_bw()
+      theme(text = element_text(size = 15))
   })
 }
 
