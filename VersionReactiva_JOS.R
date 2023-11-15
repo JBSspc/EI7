@@ -5,6 +5,7 @@ library(dplyr)
 
 # Cargamos los datos ---------------------------------
 load("db_lupus2.RData")
+load("descripcionGraf.RData")
 
 # Definir la UI --------------------------------------
 ui <- fluidPage(
@@ -18,10 +19,16 @@ ui <- fluidPage(
         label = "Aspecto relacionado con la calidad de vida: ",
         choices = colnames(db_lupus2[,2:27])
       ),
+      selectInput(
+        inputId = "variableGraf", # Pregunta de calidad de vida
+        label = "Descripción del gráfico ",
+        choices = colnames(df)
+      ),
     ),
     # Salidas
     mainPanel(
-    plotOutput(outputId = "plot")
+    plotOutput(outputId = "plot"),
+    verbatimTextOutput(outputId = "descripcion")
     )
   )
 )
@@ -31,6 +38,10 @@ server <- function(input, output) {
   reactive_data <- reactive({
     db_lupus2 %>%
       count(dx_time, .data[[input$variable]], wt = NULL)
+  })
+  
+  des <- reactive({
+    data[, input$varaibleGraf, drop = FALSE]
   })
   
   output$plot <- renderPlot({
@@ -46,8 +57,13 @@ server <- function(input, output) {
       guides(colour = guide_legend(title = paste("¿Cómo puntuaría su", input$variable, "?"))) +
       theme(text = element_text(size = 15))
   })
+  
+  output$descripcion <- renderPrint({
+    des()
+  })
+
+
 }
-#scale_colour_hue(labels = c("Mala", "Normal", "Buena", "Muy buena")) +
 
 # Crear un objeto de Shiny app --------------------
 shinyApp(ui=ui, server = server)
