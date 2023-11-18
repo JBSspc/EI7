@@ -9,6 +9,7 @@ load("db_lupus2.RData")
 # Definir la UI --------------------------------------
 ui <- fluidPage(
   titlePanel("Calidad de vida de un paciente con Lupus"),
+  p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas "),
   
   
   sidebarLayout(
@@ -19,6 +20,7 @@ ui <- fluidPage(
         label = "Aspecto relacionado con la calidad de vida: ",
         choices = colnames(db_lupus2[,2:27])
       ),
+      p(strong("Descripción de la gráfica")),
       tabsetPanel(type="tab",
                   tabPanel("Calidad de vida",
                            p(style="text-align: justify;","Esta gráfica indica el nivel de satisfacción de los pacientes respecto a su calidad de vida, según el tiempo de diagnóstico.")),
