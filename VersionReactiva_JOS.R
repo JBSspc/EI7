@@ -5,7 +5,8 @@ library(dplyr)
 library(shinyWidgets)
 
 # Cargamos los datos ---------------------------------
-load("db_lupus2.RData")
+#load("db_lupus2.RData")
+load("newdb.RData")
 
 # Definir la UI --------------------------------------
 ui <- fluidPage(
@@ -19,7 +20,7 @@ ui <- fluidPage(
       selectInput(
         inputId = "variable", # Pregunta de calidad de vida
         label = "Aspecto relacionado con la calidad de vida: ",
-        choices = colnames(db_lupus2[,2:27])
+        choices = colnames(newdb[,3:28])
       ),
       setBackgroundColor(
         color = c("#FFFFFF", "#FFFAFA"),
@@ -98,7 +99,7 @@ ui <- fluidPage(
 # Definir el servidor -----------------------------------
 server <- function(input, output) {
   reactive_data <- reactive({
-    db_lupus2 %>%
+    newdb %>%
       count(dx_time, .data[[input$variable]], wt = NULL)
   })
   
