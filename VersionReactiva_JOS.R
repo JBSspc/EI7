@@ -2,13 +2,14 @@
 library(shiny)
 library(ggplot2)
 library(dplyr)
+library(shinyWidgets)
 
 # Cargamos los datos ---------------------------------
 load("db_lupus2.RData")
 
 # Definir la UI --------------------------------------
 ui <- fluidPage(
-  titlePanel("Calidad de vida de un paciente con Lupus"),
+  titlePanel(strong("Calidad de vida de un paciente con Lupus")),
   p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas "),
   
   
@@ -19,6 +20,11 @@ ui <- fluidPage(
         inputId = "variable", # Pregunta de calidad de vida
         label = "Aspecto relacionado con la calidad de vida: ",
         choices = colnames(db_lupus2[,2:27])
+      ),
+      setBackgroundColor(
+        color = c("#FFFFFF", "#FFFAFA"),
+        gradient = "linear",
+        direction = "bottom"
       ),
       p(strong("Descripción de la gráfica")),
       tabsetPanel(type="tab",
@@ -83,7 +89,6 @@ ui <- fluidPage(
     h3(strong("Introducción")),
     p(style="text-align: justify;","El presente proyecto se enfoca en el diseño e implementación de una aplicación que permite visualizar las variables de tiempo de diagnóstico y calidad de vida para los sujetos con diagnóstico de lupus. "),
     p(style="text-align: justify;","En esta entrega, se incluyen gráficos estáticos que se  intregarán en un ambiente reactivo, con el fin de que el usuario pueda escoger una variable relacionada con la calidad de vida y pueda visualizar cómo ha sido la calidad de vida de los pacientes con lupus, según el tiempo de diagnóstico que tienen (desde el dianóstico formal hasta el momento en que se registró en la base de datos). Lo anterior, puede ayudarles a conocer algunas características que podrían esperar de la enfermedad en los próximos años."),
-      
     plotOutput(outputId = "plot"),
     
     )
