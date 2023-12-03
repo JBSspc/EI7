@@ -18,6 +18,13 @@ library(bslib)
 load("newdb.RData")
 
 
+# Assuming your PNG files are in a folder named 'images'
+png_folder_path <- "C:/Users/sofia/OneDrive/Documentos/EI7/PNG"
+
+# List PNG files in the folder
+png_files <- list.files(png_folder_path, pattern = "\\.png$", full.names = FALSE)
+
+
 # UI
 ui <- navbarPage(" LupusLifeSymphony",
                  tabPanel("Calidad de vida",
@@ -99,18 +106,18 @@ ui <- navbarPage(" LupusLifeSymphony",
                           dashboardPage(
                             dashboardHeader(title = "Reactive PNG Viewer"),
                             dashboardSidebar(
-                              radioButtons("fileNumber", "Select File Number", choices = c(0,0.5,1,1.5,1.67,2,2.17,2.42,2.75,3,4,5,6,7,8,9,10,11,12,13,13.42,14,15,16,17,19,20,22,23,24,25,32,34,40), selected = 1),
+                              selectInput("imageSelector", "Select Image", choices = png_files),
                               br(),
-                              tags$div(id = "pngPreview", style = "display: flex; flex-wrap: wrap;")
+                              tags$div(id = "imagePreview", style = "text-align: center;")
                             ),
                             dashboardBody(
                               tags$script('
       $(document).on("shiny:connected", function() {
-        Shiny.setInputValue("fileNumber", $("input[name=\'fileNumber\']:checked").val());
+        Shiny.setInputValue("imageSelector", $("#imageSelector").val());
       });
       
-      $("input[name=\'fileNumber\']").change(function() {
-        Shiny.setInputValue("fileNumber", $(this).val());
+      $("#imageSelector").change(function() {
+        Shiny.setInputValue("imageSelector", $(this).val());
       });
     ')
                             )
@@ -145,15 +152,15 @@ server <-  server <- function(input, output) {
   
   # TAB Síntomas
   observe({
-    # Get the selected file number
-    file_number <- as.numeric(input$fileNumber)
+    # Get the selected image name
+    selected_image <- input$imageSelector
     
-    # Construct the file name based on the selected number
-    file_name <- paste0("C:/Users/sofia/OneDrive/Documentos/EI7/PNG/", file_number, ".png")
+    # Construct the file path based on the selected image name
+    file_path <- file.path(png_folder_path, selected_image)
     
-    # Display the PNG file
-    output$pngPreview <- renderUI({
-      tags$img(src = file_name, height = "200px", width = "auto", style = "margin: 5px;")
+    # Display the selected image
+    output$imagePreview <- renderUI({
+      tags$img(src = file_path, height = "auto", width = "100%", style = "margin: 5px;")
     })
   })
   
