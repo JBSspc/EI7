@@ -6,10 +6,12 @@
 
 # LIBRERÍAS
 library(shiny)
+library(shinydashboard)
 library(ggplot2)
 library(dplyr)
 library(shinyWidgets)
 library(bslib)
+
 
 
 # BASE DE DATOS
@@ -20,7 +22,7 @@ load("newdb.RData")
 ui <- navbarPage(" LupusLifeSymphony",
                  tabPanel("Calidad de vida",
                           titlePanel(strong("Calidad de vida de un paciente con Lupus")),
-                          p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas ")),
+                          p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas "),
                           
                  sidebarPanel(
                             selectInput(
@@ -88,11 +90,35 @@ ui <- navbarPage(" LupusLifeSymphony",
                            h3(strong("Introducción")),
                            p(style="text-align: justify;","El presente proyecto se enfoca en el diseño e implementación de una aplicación que permite visualizar las variables de tiempo de diagnóstico y calidad de vida para los sujetos con diagnóstico de lupus. "),
                            p(style="text-align: justify;","En esta entrega, se incluyen gráficos estáticos que se  intregarán en un ambiente reactivo, con el fin de que el usuario pueda escoger una variable relacionada con la calidad de vida y pueda visualizar cómo ha sido la calidad de vida de los pacientes con lupus, según el tiempo de diagnóstico que tienen (desde el dianóstico formal hasta el momento en que se registró en la base de datos). Lo anterior, puede ayudarles a conocer algunas características que podrían esperar de la enfermedad en los próximos años."),
-                           plotOutput(outputId = "plot")), # FIN DE mainPanel
+                           plotOutput(outputId = "plot")) # FIN DE mainPanel
+                 ),# FIN DE TAB Calidad de vida
                           
-                 tabPanel("Síntomas")) # FIN DE navbarPage
+                 tabPanel("Síntomas",
+                          titlePanel(strong("Síntomas experimentados por los pacientes a lo largo del tiempo")),
+                          p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas ")),
+                          dashboardPage(
+                            dashboardHeader(title = "Reactive PNG Viewer"),
+                            dashboardSidebar(
+                              radioButtons("fileNumber", "Select File Number", choices = c(0,0.5,1,1.5,1.67,2,2.17,2.42,2.75,3,4,5,6,7,8,9,10,11,12,13,13.42,14,15,16,17,19,20,22,23,24,25,32,34,40), selected = 1),
+                              br(),
+                              tags$div(id = "pngPreview", style = "display: flex; flex-wrap: wrap;")
+                            ),
+                            dashboardBody(
+                              tags$script('
+      $(document).on("shiny:connected", function() {
+        Shiny.setInputValue("fileNumber", $("input[name=\'fileNumber\']:checked").val());
+      });
+      
+      $("input[name=\'fileNumber\']").change(function() {
+        Shiny.setInputValue("fileNumber", $(this).val());
+      });
+    ')
+                            )
+                          )
+                 ) # FIN DE TAB Síntomas
 
 # SERVER
+# TAB Calidad de Vida
 server <-  server <- function(input, output) {
   reactive_data <- reactive({
     newdb %>%
@@ -117,9 +143,25 @@ server <-  server <- function(input, output) {
       theme(text = element_text(size = 15))
   })
   
+  # TAB Síntomas
+  observe({
+    # Get the selected file number
+    file_number <- as.numeric(input$fileNumber)
+    
+    # Construct the file name based on the selected number
+    file_name <- paste0("C:/Users/sofia/OneDrive/Documentos/EI7/PNG/", file_number, ".png")
+    
+    # Display the PNG file
+    output$pngPreview <- renderUI({
+      tags$img(src = file_name, height = "200px", width = "auto", style = "margin: 5px;")
+    })
+  })
+  
   
   
 }
 
 # SHINY APP
 shinyApp(ui=ui, server = server)
+
+
