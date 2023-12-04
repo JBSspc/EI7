@@ -1,0 +1,2250 @@
+---
+title: "Giff app"
+author: "Sofía Palacios Cuevas"
+date: "`r Sys.Date()`"
+output: 
+  html_document:                   
+    collapsed: true                # Contraer celdas de salida (creo...)
+    code_folding: show             # Mostrar el código
+    toc: true                      # Mostrar la tabla de contenidos
+    toc_depth: 3                   # Niveles de títulos que se mostrarán
+    toc_float: true                # Índices o contenidos flotantes 
+    smooth_scroll: true            # Activar el scroll
+    highlight: kate                # Destacar
+    df_print: paged                # Mostrar los dataframes en páginas
+    number_sections: true          # Numeración de contenidos
+    theme: simplex                 # Tema
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+LIBRERÍAS
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(magick)
+library(gganimate)
+#library(countrycode)
+#library(RColorBrewer)
+#devtools::install_github("rensa/ggflags")
+#library(ggthemes)
+library(fmsb)
+
+```
+
+LIMPIEZA DE LA BASE DE DATOS
+```{r}
+o <- read.csv("bd_lupus_shiny_develop_1.1.csv")
+lls<-o[,c(26:51,85, 130:155)]
+lls <- na.omit(lls)
+```
+
+```{r Cambio de nombre - calidad de vida}
+lls <- rename(lls, calidad_vida = bref1,salud = bref2, imped_por_dolor = bref3, cantidad_medicamento = bref4, disfruta_vida = bref5, vida_sin_sentido = bref6, concentracion = bref7, seguridad = bref8,ambiente_fisico_saludable = bref9,energia_suficiente = bref10,aceptar_apariencia = bref11,dinero_suficiente = bref12,info_disponible = bref13,oportunidad_ocio = bref14,capaz_desplazarse = bref15,sueno = bref16,actividades_diarias = bref17,capaz_trabajo = bref18,si_mismo = bref19,relaciones_personales = bref20,vida_sexual = bref21,apoyo_amigos = bref22,condiciones_vivienda = bref23,acceso_serv_sanitarios = bref24,transporte = bref25,frecuencia_sent_neg = bref26)
+```
+
+```{r Cambio de nombre - sympthoms}
+lls <- rename(lls, convulsion = sledai_points___1, psicosis = sledai_points___2, sindrome_cereb_org =  sledai_points___3, conciencia = sledai_points___conciencia,  alteracion_visual = sledai_points___4, alteracion_nervios = sledai_points___5, cefalea_lupica = sledai_points___6, accidente_cerebrovasc = sledai_points___7, vasculitis = sledai_points___8, artritis = sledai_points___9, miositis = sledai_points___10, cilindros_urin = sledai_points___11, hematuria = sledai_points___12, proteinuria = sledai_points___13, piuria = sledai_points___14, erupcion = sledai_points___15, alopecia = sledai_points___16, ulcera_mocosa = sledai_points___17, pleuresia = sledai_points___18, pericarditis = sledai_points___19, hipocomplem = sledai_points___20, aumento_union = sledai_points___21, Fiebre = sledai_points___22, trombocitopen = sledai_points___23, leucopenia = sledai_points___24, ninguno = sledai_points___25)
+```
+
+```{r Levels - calidad de vida}
+lls$calidad_vida<-factor(lls$calidad_vida, levels = c("1", "2", "3", "4", "5"))
+levels(lls$calidad_vida)<-c("Muy mala", "Mala", "Normal", "Buena", "Muy buena")
+
+lls$salud<-factor(lls$salud, levels = c("1", "2", "3", "4", "5"))
+levels(lls$salud)<-c("Muy insatisfecho", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+
+lls$imped_por_dolor<-factor(lls$imped_por_dolor, levels = c("5", "4", "3", "2", "1"))
+levels(lls$imped_por_dolor)<-c("Nada", "Poco", "Normal", "Buena", "Muy buena")
+
+lls$cantidad_medicamento<-factor(lls$cantidad_medicamento, levels = c("5", "4", "3", "2", "1"))
+levels(lls$cantidad_medicamento)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+lls$disfruta_vida<-factor(lls$disfruta_vida, levels = c("1", "2", "3", "4", "5") )
+levels(lls$disfruta_vida)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+lls$vida_sin_sentido<-factor(lls$vida_sin_sentido, levels = c("1", "2", "3", "4", "5"))
+levels(lls$vida_sin_sentido)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+
+lls$concentracion<-factor(lls$concentracion, levels = c("1", "2", "3", "4", "5") )
+levels(lls$concentracion)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+
+lls$seguridad<-factor(lls$seguridad, levels =c("1", "2", "3", "4", "5") )
+levels(lls$seguridad)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+lls$ambiente_fisico_saludable<-factor(lls$ambiente_fisico_saludable, levels = c("1", "2", "3", "4", "5") )
+levels(lls$ambiente_fisico_saludable)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+lls$capaz_desplazarse<-factor(lls$capaz_desplazarse, levels = c("1", "2", "3", "4", "5"))
+levels(lls$capaz_desplazarse)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+lls$energia_suficiente<-factor(lls$energia_suficiente, levels = c("1", "2", "3", "4", "5"))
+levels(lls$energia_suficiente)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+lls$aceptar_apariencia<-factor(lls$aceptar_apariencia, levels = c("1", "2", "3", "4", "5"))
+levels(lls$aceptar_apariencia)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+lls$dinero_suficiente<-factor(lls$dinero_suficiente, levels = c("1", "2", "3", "4", "5"))
+levels(lls$dinero_suficiente)<- c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+lls$info_disponible<-factor(lls$info_disponible, levels =c("1", "2", "3", "4", "5") )
+levels(lls$info_disponible)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+lls$oportunidad_ocio<-factor(lls$oportunidad_ocio, levels = c("1", "2", "3", "4", "5"))
+levels(lls$oportunidad_ocio)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+lls$sueno<-factor(lls$sueno, levels = c("1", "2", "3", "4", "5"))
+levels(lls$sueno)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$actividades_diarias<-factor(lls$actividades_diarias, levels = c("1", "2", "3", "4", "5") )
+levels(lls$actividades_diarias)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$capaz_trabajo<-factor(lls$capaz_trabajo, levels = c("1", "2", "3", "4", "5"))
+levels(lls$capaz_trabajo)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$si_mismo<-factor(lls$si_mismo, levels = c("1", "2", "3", "4", "5"))
+levels(lls$si_mismo)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$relaciones_personales<-factor(lls$relaciones_personales, levels = c("1", "2", "3", "4", "5") )
+levels(lls$relaciones_personales)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$vida_sexual<-factor(lls$vida_sexual, levels = c("1", "2", "3", "4", "5"))
+levels(lls$vida_sexual)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$apoyo_amigos<-factor(lls$apoyo_amigos, levels = c("1", "2", "3", "4", "5"))
+levels(lls$apoyo_amigos)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$condiciones_vivienda<-factor(lls$condiciones_vivienda, levels = c("1", "2", "3", "4", "5"))
+levels(lls$condiciones_vivienda)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$acceso_serv_sanitarios<-factor(lls$acceso_serv_sanitarios, levels =c("1", "2", "3", "4", "5"))
+levels(lls$acceso_serv_sanitarios)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$transporte<-factor(lls$transporte, levels = c("1", "2", "3", "4", "5"))
+levels(lls$transporte)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+lls$frecuencia_sent_neg<-factor(lls$frecuencia_sent_neg, levels = c("5", "4", "3", "2", "1") )
+levels(lls$frecuencia_sent_neg)<-c("Nada", "Raramente", "Medianamente", "Frecuentemente", "Siempre")
+```
+
+```{r Cambio manual datos - dxtime}
+# write.csv(lls,file='C:/Users/sofia/OneDrive/Documentos/EI7/lls.csv')
+lls_m <- read.csv("lls.csv")
+lls_m <- lls_m[,c(1:50)]
+lls_m_r <- read.csv("lls_m_r.csv")
+```
+
+A. GENERACIÓN DE GRÁFICOS -> PNG
+
+t = 0
+```{r tiempo = 0}
+t0<-as.data.frame(lls_m_r[1,c(2:27)])
+t0 <- t0 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t0 <- t0 <- cbind(t0, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t0 <- t0
+ 
+# calculate the ANGLE of the labels
+number_of_bar_t0 <- nrow(t0)
+angle_t0 <-  90 - 360 * (label_t0$ID-0.5) /number_of_bar_t0     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t0$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t0$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t0 <- ggplot(t0, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t0,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t0
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t0.png", p_t0, width = 6, height = 4, units = "in")
+```
+
+
+t = 0.5
+```{r tiempo = 0.5}
+t0_5<-as.data.frame(lls_m_r[2,c(2:27)])
+t0_5 <- t0_5 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t0_5 <- t0_5 <- cbind(t0_5, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t0_5 <- t0_5
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t0_5$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t0_5$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t0_5 <- ggplot(t0_5, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t0_5,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t0_5
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t0_5.png", p_t0_5, width = 6, height = 4, units = "in")
+```
+
+
+t = 1
+```{r tiempo = 1}
+t01<-as.data.frame(lls_m_r[3,c(2:27)])
+t01 <- t01 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t01 <- t01 <- cbind(t01, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t01 <- t01
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t01$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t01$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t01 <- ggplot(t01, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t01,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t01
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t01.png", p_t01, width = 6, height = 4, units = "in")
+```
+
+
+t = 1.50
+```{r tiempo = 1.50}
+t01_50<-as.data.frame(lls_m_r[4,c(2:27)])
+t01_50 <- t01_50 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t01_50 <- t01_50 <- cbind(t01_50, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t01_50 <- t01_50
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t01_50$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t01_50$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t01_50 <- ggplot(t01_50, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t01_50,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t01_50
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t01_50.png", p_t01_50, width = 6, height = 4, units = "in")
+```
+
+
+t = 1.67
+```{r tiempo = 1.67}
+t01_67<-as.data.frame(lls_m_r[5,c(2:27)])
+t01_67 <- t01_67 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t01_67 <- t01_67 <- cbind(t01_67, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t01_67 <- t01_67
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t01_67$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t01_67$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t01_67 <- ggplot(t01_67, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t01_67,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t01_67
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t01_67.png", p_t01_67, width = 6, height = 4, units = "in")
+```
+
+
+t = 2
+```{r tiempo = 2}
+t02<-as.data.frame(lls_m_r[6,c(2:27)])
+t02 <- t02 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t02 <- t02 <- cbind(t02, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t02 <- t02
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t02$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t02$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t02 <- ggplot(t02, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t02,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t02
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t02.png", p_t02, width = 6, height = 4, units = "in")
+```
+
+
+t = 2.75
+```{r tiempo = 2.75}
+t02_75<-as.data.frame(lls_m_r[7,c(2:27)])
+t02_75 <- t02_75 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t02_75 <- t02_75 <- cbind(t02_75, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t02_75 <- t02_75
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t02_75$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t02_75$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t02_75 <- ggplot(t02_75, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t02_75,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t02_75
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t02_75.png", p_t02_75, width = 6, height = 4, units = "in")
+```
+
+
+t = 2.42
+```{r tiempo = 2.42}
+t02_42<-as.data.frame(lls_m_r[8,c(2:27)])
+t02_42 <- t02_42 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t02_42 <- t02_42 <- cbind(t02_42, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t02_42 <- t02_42
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t02_42$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t02_42$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t02_42 <- ggplot(t02_42, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t02_42,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t02_42
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t02_42.png", p_t02_42, width = 6, height = 4, units = "in")
+```
+
+
+t = 2.17
+```{r tiempo = 2.17}
+t02_17<-as.data.frame(lls_m_r[9,c(2:27)])
+t02_17 <- t02_17 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t02_17 <- t02_17 <- cbind(t02_17, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t02_17 <- t02_17
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t02_17$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t02_17$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t02_17 <- ggplot(t02_17, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t02_17,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t02_17
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t02_17.png", p_t02_17, width = 6, height = 4, units = "in")
+```
+
+
+t = 3
+```{r tiempo = 3}
+t03<-as.data.frame(lls_m_r[10,c(2:27)])
+t03 <- t03 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t03 <- t03 <- cbind(t03, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t03 <- t03
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t03$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t03$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t03 <- ggplot(t03, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t03,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t03
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t03.png", p_t03, width = 6, height = 4, units = "in")
+```
+
+
+t = 4
+```{r tiempo = 4}
+t04<-as.data.frame(lls_m_r[11,c(2:27)])
+t04 <- t04 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t04 <- t04 <- cbind(t04, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t04 <- t04
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t04$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t04$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t04 <- ggplot(t04, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t04,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t04
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t04.png", p_t04, width = 6, height = 4, units = "in")
+```
+
+
+t = 5
+```{r tiempo = 5}
+t05<-as.data.frame(lls_m_r[12,c(2:27)])
+t05 <- t05 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t05 <- t05 <- cbind(t05, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t05 <- t05
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t05$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t05$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t05 <- ggplot(t05, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t05,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t05
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t05.png", p_t05, width = 6, height = 4, units = "in")
+```
+
+
+t = 6
+```{r tiempo = 6}
+t06<-as.data.frame(lls_m_r[13,c(2:27)])
+t06 <- t06 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t06 <- t06 <- cbind(t06, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t06 <- t06
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t06$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t06$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t06 <- ggplot(t06, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t06,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t06
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t06.png", p_t06, width = 6, height = 4, units = "in")
+```
+
+
+t = 7
+```{r tiempo = 7}
+t07<-as.data.frame(lls_m_r[14,c(2:27)])
+t07 <- t07 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t07 <- t07 <- cbind(t07, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t07 <- t07
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t07$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t07$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t07 <- ggplot(t07, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t07,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t07
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t07.png", p_t07, width = 6, height = 4, units = "in")
+```
+
+
+t = 8
+```{r tiempo = 8}
+t08<-as.data.frame(lls_m_r[15,c(2:27)])
+t08 <- t08 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t08 <- t08 <- cbind(t08, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t08 <- t08
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t08$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t08$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t08 <- ggplot(t08, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t08,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t08
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t08.png", p_t08, width = 6, height = 4, units = "in")
+```
+
+
+t = 9
+```{r tiempo = 9}
+t09<-as.data.frame(lls_m_r[16,c(2:27)])
+t09 <- t09 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t09 <- t09 <- cbind(t09, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t09 <- t09
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t09$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t09$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t09 <- ggplot(t09, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t09,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t09
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t09.png", p_t09, width = 6, height = 4, units = "in")
+```
+
+
+t = 10
+```{r tiempo = 10}
+t10<-as.data.frame(lls_m_r[17,c(2:27)])
+t10 <- t10 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t10 <- t10 <- cbind(t10, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t10 <- t10
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t10$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t10$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t10 <- ggplot(t10, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t10,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t10
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t10.png", p_t10, width = 6, height = 4, units = "in")
+```
+
+
+t = 11
+```{r tiempo = 11}
+t11<-as.data.frame(lls_m_r[18,c(2:27)])
+t11 <- t11 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t11 <- t11 <- cbind(t11, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t11 <- t11
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t11$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t11$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t11 <- ggplot(t11, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t11,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t11
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t11.png", p_t11, width = 6, height = 4, units = "in")
+```
+
+
+t = 12
+```{r tiempo = 12}
+t12<-as.data.frame(lls_m_r[19,c(2:27)])
+t12 <- t12 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t12 <- t12 <- cbind(t12, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t12 <- t12
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t12$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t12$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t12 <- ggplot(t12, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t12,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t12
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t12.png", p_t12, width = 6, height = 4, units = "in")
+```
+
+
+t = 13
+```{r tiempo = 13}
+t13<-as.data.frame(lls_m_r[20,c(2:27)])
+t13 <- t13 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t13 <- t13 <- cbind(t13, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t13 <- t13
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t13$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t13$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t13 <- ggplot(t13, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t13,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t13
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t13.png", p_t13, width = 6, height = 4, units = "in")
+```
+
+
+t = 13.42
+```{r tiempo = 13.42}
+t13_42<-as.data.frame(lls_m_r[21,c(2:27)])
+t13_42 <- t13_42 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t13_42 <- t13_42 <- cbind(t13_42, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t13_42 <- t13_42
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t13_42$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t13_42$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t13_42 <- ggplot(t13_42, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t13_42,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t13_42
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t13_42.png", p_t13_42, width = 6, height = 4, units = "in")
+```
+
+
+t = 14
+```{r tiempo = 14}
+t14<-as.data.frame(lls_m_r[22,c(2:27)])
+t14 <- t14 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t14 <- t14 <- cbind(t14, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t14 <- t14
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t14$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t14$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t14 <- ggplot(t14, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t14,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t14
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t14.png", p_t14, width = 6, height = 4, units = "in")
+```
+
+
+t = 15
+```{r tiempo = 15}
+t15<-as.data.frame(lls_m_r[23,c(2:27)])
+t15 <- t15 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t15 <- t15 <- cbind(t15, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t15 <- t15
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t15$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t15$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t15 <- ggplot(t15, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t15,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t15
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t15.png", p_t15, width = 6, height = 4, units = "in")
+```
+
+
+t = 16
+```{r tiempo = 16}
+t16<-as.data.frame(lls_m_r[24,c(2:27)])
+t16 <- t16 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t16 <- t16 <- cbind(t16, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t16 <- t16
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t16$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t16$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t16 <- ggplot(t16, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t16,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t16
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t16.png", p_t16, width = 6, height = 4, units = "in")
+```
+
+
+t = 17
+```{r tiempo = 17}
+t17<-as.data.frame(lls_m_r[25,c(2:27)])
+t17 <- t17 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t17 <- t17 <- cbind(t17, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t17 <- t17
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t17$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t17$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t17 <- ggplot(t17, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t17,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t17
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t17.png", p_t17, width = 6, height = 4, units = "in")
+```
+
+
+t = 19
+```{r tiempo = 19}
+t19<-as.data.frame(lls_m_r[26,c(2:27)])
+t19 <- t19 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t19 <- t19 <- cbind(t19, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t19 <- t19
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t19$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t19$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t19 <- ggplot(t19, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t19,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t19
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t19.png", p_t19, width = 6, height = 4, units = "in")
+```
+
+
+t = 20
+```{r tiempo = 20}
+t20<-as.data.frame(lls_m_r[27,c(2:27)])
+t20 <- t20 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t20 <- t20 <- cbind(t20, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t20 <- t20
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t20$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t20$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t20 <- ggplot(t20, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t20,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t20
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t20.png", p_t20, width = 6, height = 4, units = "in")
+```
+
+
+t = 22
+```{r tiempo = 22}
+t22<-as.data.frame(lls_m_r[28,c(2:27)])
+t22 <- t22 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t22 <- t22 <- cbind(t22, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t22 <- t22
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t22$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t22$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t22 <- ggplot(t22, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t22,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t22
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t22.png", p_t22, width = 6, height = 4, units = "in")
+```
+
+
+t = 23
+```{r tiempo = 23}
+t23<-as.data.frame(lls_m_r[29,c(2:27)])
+t23 <- t23 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t23 <- t23 <- cbind(t23, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t23 <- t23
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t23$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t23$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t23 <- ggplot(t23, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t23,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t23
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t23.png", p_t23, width = 6, height = 4, units = "in")
+```
+
+
+t = 24
+```{r tiempo = 24}
+t24<-as.data.frame(lls_m_r[30,c(2:27)])
+t24 <- t24 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t24 <- t24 <- cbind(t24, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t24 <- t24
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t24$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t24$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t24 <- ggplot(t24, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t24,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t24
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t24.png", p_t24, width = 6, height = 4, units = "in")
+```
+
+t = 25
+```{r tiempo = 25}
+t25<-as.data.frame(lls_m_r[31,c(2:27)])
+t25 <- t25 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t25 <- t25 <- cbind(t25, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t25 <- t25
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t25$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t25$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t25 <- ggplot(t25, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t25,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t25
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t25.png", p_t25, width = 6, height = 4, units = "in")
+```
+
+
+t = 32
+```{r tiempo = 32}
+t32<-as.data.frame(lls_m_r[32,c(2:27)])
+t32 <- t32 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t32 <- t32 <- cbind(t32, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t32 <- t32
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t32$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t32$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t32 <- ggplot(t32, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t32,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t32
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t32.png", p_t32, width = 6, height = 4, units = "in")
+```
+
+
+t = 34
+```{r tiempo = 34}
+t34<-as.data.frame(lls_m_r[33,c(2:27)])
+t34 <- t34 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t34 <- t34 <- cbind(t34, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t34 <- t34
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t34$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t34$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t34 <- ggplot(t34, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t34,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=2.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t34
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t34.png", p_t34, width = 6, height = 4, units = "in")
+```
+
+
+t = 40
+```{r tiempo = 40}
+t40<-as.data.frame(lls_m_r[34,c(2:27)])
+t40 <- t40 %>%
+  pivot_longer(cols = everything(), names_to = "Sympthoms", values_to = "Value")
+t40 <- t40 <- cbind(t40, ID = seq(1,26))
+
+
+# ----- This section prepare a dataframe for labels ---- #
+# Get the name and the y position of each label
+label_t40 <- t40
+ 
+# calculate the alignment of labels: right or left
+# If I am on the left part of the plot, my labels have currently an angle < -90
+label_t40$hjust<-ifelse( angle_t0 < -90, 1, 0)
+ 
+# flip angle BY to make them readable
+label_t40$angle_t0<-ifelse(angle_t0 < -90, angle_t0+180, angle_t0)
+# ----- ------------------------------------------- ---- #
+
+# Start the plot
+p_t40 <- ggplot(t40, aes(x=as.factor(ID), y=Value)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+  
+  # This add the bars with a blue color
+  geom_bar(stat="identity", fill=alpha("skyblue", 0.7)) +
+  
+  # Limits of the plot = very important. The negative value controls the size of the inner circle, the positive one is useful to add size over each bar
+  ylim(-10,25) +
+  
+  # Custom the theme: no axis title and no cartesian grid
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")      # Adjust the margin to make in sort labels are not truncated!
+  ) +
+  
+  # This makes the coordinate polar instead of cartesian.
+  coord_polar(start = 0) +
+  
+  # Add the labels, using the label_data dataframe that we have created before
+  geom_text(
+    data=label_t40,
+    aes(x=ID, y=Value+1, label=Sympthoms, hjust=hjust),
+    color="black",
+    fontface="bold",
+    alpha=0.6,
+    size=1.5,
+    angle= label_t0$angle_t0,
+    inherit.aes = FALSE ) 
+ 
+p_t40
+
+# Save the ggplot as an image (e.g., PNG)
+ggsave("p_t40.png", p_t40, width = 3, height = 2, units = "in")
+```
+
+
+GIFF
+
+```{r giff}
+# Specify the path to your PNG files
+png_files <- list.files(path = "/PNG", pattern = "\\.png$", full.names = TRUE)
+
+# Read PNG files
+frames <- image_read(png_files)
+frames
+
+# Turn frames into animation
+animation <- image_animate(frames, fps = 10, optimize = TRUE)
+
+print(animation)
+
+# Create an animated GIF
+gif_file <- "Sympthoms.gif"
+image_write(frames, gif_file, format = "gif", delay = 100, options ="optimizeplus")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r radialgrpah t0_a}
+library(fmsb)
+t0_a<-as.data.frame(lls_m_r[1,c(2:14)])
+#a <- lls_m_r[,2:27]
+t0_a<-rbind(rep(15,13), rep(0,13),t0_a)
+radarchart(t0_a, 
+           axislabcol = "black", # color of labels
+           plty = 1, # type of line
+           cglty = 1, # type of grid line
+           cglcol = "grey", # color of grid lines
+           pcol = "blue", # color of polygon
+           pfcol = "lightblue", # fill color of polygon
+           plwd = 2, # width of polygon line
+           plcol = "darkblue", # color of polygon line
+           segcol = "darkred", # color of radial grid lines
+           vlcex = 0.8, # size of labels
+           title = "Síntomas experimentados a los 0 años del diagnóstico"
+)
+```
+
+
+
+
+
+
+GRAFICA DE RADAR
+```{r dx_time = 0}
+library(fmsb)
+data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
+colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
+data <- rbind(rep(20,10) , rep(0,10) , data)
+radarchart(data,axistype=1 , 
+ 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+ 
+    #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+ 
+    #custom labels
+    vlcex=0.8 
+    )
+```
+
