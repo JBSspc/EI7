@@ -14,14 +14,15 @@ library(bslib)
 
 
 
+
 # BASE DE DATOS
 load("newdb.RData")
 
 
-# Assuming your PNG files are in a folder named 'images'
+#FOLDER DE LAS IMÁGENES
 png_folder_path <- "www/"
 
-# List PNG files in the folder
+# LISTA DE LAS IMÁGENES EN 'www/'
 png_files <- list.files(png_folder_path, pattern = "\\.png$", full.names = FALSE)
 
 
@@ -193,13 +194,13 @@ server <-  server <- function(input, output) {
     data$calidad_vida <- as.factor(data[[input$variable]])
     
     ggplot(data, aes(dx_time, n, colour = calidad_vida)) +
-      geom_point(position = "jitter", size=5) +
+      geom_point(position = "jitter", alpha = 0.40, size=10) +
       xlab("Tiempo de diagnóstico (años)") +
       ylab("Incidencia") +
       ggtitle(paste("Tiempo de diagnóstico y", input$variable)) +
       scale_colour_hue() +
       guides(colour = guide_legend(title = paste("¿Cómo puntuaría su", input$variable, "?"))) +
-      theme(text = element_text(size = 15))
+      theme(text = element_text(size = 17.5))
   })
   
   # TAB Síntomas
@@ -213,5 +214,3 @@ server <-  server <- function(input, output) {
 
 # SHINY APP
 shinyApp(ui=ui, server = server)
-
-
