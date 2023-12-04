@@ -19,7 +19,7 @@ load("newdb.RData")
 
 
 # Assuming your PNG files are in a folder named 'images'
-png_folder_path <- "C:/Users/sofia/OneDrive/Documentos/EI7/PNG"
+png_folder_path <- "www/"
 
 # List PNG files in the folder
 png_files <- list.files(png_folder_path, pattern = "\\.png$", full.names = FALSE)
@@ -102,27 +102,53 @@ ui <- navbarPage(" LupusLifeSymphony",
                           
                  tabPanel("Síntomas",
                           titlePanel(strong("Síntomas experimentados por los pacientes a lo largo del tiempo")),
-                          p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas ")),
+                          p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas "),
                           dashboardPage(
                             dashboardHeader(title = "Reactive PNG Viewer"),
                             dashboardSidebar(
-                              selectInput("imageSelector", "Select Image", choices = png_files),
-                              br(),
-                              tags$div(id = "imagePreview", style = "text-align: center;")
+                              selectInput("imageSelector", "Seleccione el tiempo de diagnóstico:",
+                                          choices = c("0 años" = "www/0.png",
+                                                      "medio año" = "www/0.5.png",
+                                                      "1 año" = "www/1.png",
+                                                      "1 año, 8 meses" = "www/1.67.png",
+                                                      "2 años" = "www/2.png",
+                                                      "2 años, 2 meses" = "www/2.17.png",
+                                                      "2 años, 5 meses" = "www/2.42.png",
+                                                      "2 años, 9 meses" = "www/2.75.png",
+                                                      "3 años" = "www/3.png",
+                                                      "4 años" = "www/4.png",
+                                                      "5 años" = "www/7.png",
+                                                      "6 años" = "www/6.png",
+                                                      "7 años" = "www/7.png",
+                                                      "8 años" = "www/8.png",
+                                                      "9 años" = "www/9.png",
+                                                      "10 años" = "www/10.png",
+                                                      "11 años" = "www/11.png",
+                                                      "12 años" = "www/12.png",
+                                                      "13 años"= "www/13.png",
+                                                      "13 años, 5 meses" = "www/13.42.png",
+                                                      "14 años" = "www/14.png",
+                                                      "15 años" = "www/15.png",
+                                                      "16 años" = "www/16.png",
+                                                      "17 años" = "www/17.png",
+                                                      "19 años" = "www/19.png",
+                                                      "20 años" = "www/20.png",
+                                                      "22 años" = "www/22.png",
+                                                      "23 años" = "www/23.png",
+                                                      "24 años" = "www/24.png",
+                                                      "25 años" = "www/25.png",
+                                                      "32 años" = "www/32.png",
+                                                      "34 años"= "www/34.png",
+                                                      "40 años" = "www/40.png"
+                                                      )
+                              )
                             ),
                             dashboardBody(
-                              tags$script('
-      $(document).on("shiny:connected", function() {
-        Shiny.setInputValue("imageSelector", $("#imageSelector").val());
-      });
-      
-      $("#imageSelector").change(function() {
-        Shiny.setInputValue("imageSelector", $(this).val());
-      });
-    ')
+                              imageOutput("pngImage", width = "100%")
                             )
                           )
-                 ) # FIN DE TAB Síntomas
+                 )  # FIN DE TAB Síntomas
+                 ) # FIN DE navbarPage
 
 # SERVER
 # TAB Calidad de Vida
@@ -151,18 +177,9 @@ server <-  server <- function(input, output) {
   })
   
   # TAB Síntomas
-  observe({
-    # Get the selected image name
-    selected_image <- input$imageSelector
-    
-    # Construct the file path based on the selected image name
-    file_path <- file.path(png_folder_path, selected_image)
-    
-    # Display the selected image
-    output$imagePreview <- renderUI({
-      tags$img(src = file_path, height = "auto", width = "100%", style = "margin: 5px;")
-    })
-  })
+  output$pngImage <- renderImage({
+    list(src = input$imageSelector, contentType = "image/png")
+  }, deleteFile = FALSE)
   
   
   
