@@ -1,0 +1,124 @@
+---
+title: "VersionFinal"
+author: "Sofía Palacios Cuevas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lectura de la base de datos y visualizaciones rápidas {.tabset}
+
+## Lectura de la base de datos {.tabset}
+
+### Librerías
+```{r librerías para ejemplo accidentes}
+library(shiny)
+library(tidyverse)
+```
+
+### Curado de la base de datos
+```{r}
+datos_original <- read.csv("bd_lupus_shiny_develop_1.1.csv")
+newdb<-datos_original[,c(85, 130:155)]
+# 85 -> tiempo de diagnóstico
+# 130:155 -> Nivel de satisfacción diferentes cuestiones vida diaria
+
+# Cambiamos el nombre de las variables de nivel de satisfacción (brefn, n = 1, 2, ..., 26)
+newdb <- rename(newdb, calidad_vida = bref1,salud = bref2, imped_por_dolor = bref3, cantidad_medicamento = bref4, disfruta_vida = bref5, vida_sin_sentido = bref6, concentracion = bref7, seguridad = bref8,ambiente_fisico_saludable = bref9,energia_suficiente = bref10,aceptar_apariencia = bref11,dinero_suficiente = bref12,info_disponible = bref13,oportunidad_ocio = bref14,capaz_desplazarse = bref15,sueno = bref16,actividades_diarias = bref17,capaz_trabajo = bref18,si_mismo = bref19,relaciones_personales = bref20,vida_sexual = bref21,apoyo_amigos = bref22,condiciones_vivienda = bref23,acceso_serv_sanitarios = bref24,transporte = bref25,frecuencia_sent_neg = bref26)
+newdb <- na.omit(newdb)
+```
+
+```{r}
+# Levels
+newdb$calidad_vida<-factor(newdb$calidad_vida, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$calidad_vida)<-c("Muy mala", "Mala", "Normal", "Buena", "Muy buena")
+
+newdb$salud<-factor(newdb$salud, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$salud)<-c("Muy insatisfecho", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+
+newdb$imped_por_dolor<-factor(newdb$imped_por_dolor, levels = c("5", "4", "3", "2", "1"))
+levels(newdb$imped_por_dolor)<-c("Nada", "Poco", "Normal", "Buena", "Muy buena")
+
+newdb$cantidad_medicamento<-factor(newdb$cantidad_medicamento, levels = c("5", "4", "3", "2", "1"))
+levels(newdb$cantidad_medicamento)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+newdb$disfruta_vida<-factor(newdb$disfruta_vida, levels = c("1", "2", "3", "4", "5") )
+levels(newdb$disfruta_vida)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+newdb$vida_sin_sentido<-factor(newdb$vida_sin_sentido, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$vida_sin_sentido)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+
+newdb$concentracion<-factor(newdb$concentracion, levels = c("1", "2", "3", "4", "5") )
+levels(newdb$concentracion)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+
+newdb$seguridad<-factor(newdb$seguridad, levels =c("1", "2", "3", "4", "5") )
+levels(newdb$seguridad)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+newdb$ambiente_fisico_saludable<-factor(newdb$ambiente_fisico_saludable, levels = c("1", "2", "3", "4", "5") )
+levels(newdb$ambiente_fisico_saludable)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+newdb$capaz_desplazarse<-factor(newdb$capaz_desplazarse, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$capaz_desplazarse)<-c("Nada", "Poco", "Normal", "Mucho", "Extremadamente")
+  
+newdb$energia_suficiente<-factor(newdb$energia_suficiente, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$energia_suficiente)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+newdb$aceptar_apariencia<-factor(newdb$aceptar_apariencia, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$aceptar_apariencia)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+newdb$dinero_suficiente<-factor(newdb$dinero_suficiente, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$dinero_suficiente)<- c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+newdb$info_disponible<-factor(newdb$info_disponible, levels =c("1", "2", "3", "4", "5") )
+levels(newdb$info_disponible)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+newdb$oportunidad_ocio<-factor(newdb$oportunidad_ocio, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$oportunidad_ocio)<-c("Nada", "Poco", "Moderado", "Suficiente", "Totalmente")
+  
+newdb$sueno<-factor(newdb$sueno, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$sueno)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$actividades_diarias<-factor(newdb$actividades_diarias, levels = c("1", "2", "3", "4", "5") )
+levels(newdb$actividades_diarias)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$capaz_trabajo<-factor(newdb$capaz_trabajo, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$capaz_trabajo)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$si_mismo<-factor(newdb$si_mismo, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$si_mismo)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$relaciones_personales<-factor(newdb$relaciones_personales, levels = c("1", "2", "3", "4", "5") )
+levels(newdb$relaciones_personales)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$vida_sexual<-factor(newdb$vida_sexual, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$vida_sexual)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$apoyo_amigos<-factor(newdb$apoyo_amigos, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$apoyo_amigos)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$condiciones_vivienda<-factor(newdb$condiciones_vivienda, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$condiciones_vivienda)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$acceso_serv_sanitarios<-factor(newdb$acceso_serv_sanitarios, levels =c("1", "2", "3", "4", "5"))
+levels(newdb$acceso_serv_sanitarios)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$transporte<-factor(newdb$transporte, levels = c("1", "2", "3", "4", "5"))
+levels(newdb$transporte)<-c("Nada", "Poco", "Normal", "Satisfecho", "Muy satisfecho")
+  
+newdb$frecuencia_sent_neg<-factor(newdb$frecuencia_sent_neg, levels = c("5", "4", "3", "2", "1") )
+levels(newdb$frecuencia_sent_neg)<-c("Nada", "Raramente", "Medianamente", "Frecuentemente", "Siempre")
+```
+
+```{r}
+write.csv(newdb,file='C:/Users/sofia/OneDrive/Documentos/EI7/newdb.csv')
+save(newdb, file = 'C:/Users/sofia/OneDrive/Documentos/EI7/newdb.RData')
+```
+
+```{r}
+newdb<-read.csv('C:/Users/sofia/OneDrive/Documentos/EI7/newdb.csv')
+save(newdb, file = 'C:/Users/sofia/OneDrive/Documentos/EI7/newdb.RData')
+```
+
