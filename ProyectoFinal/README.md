@@ -1,6 +1,6 @@
 # LupusLifeSymphony
 ## Información general
-**Autores:** David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas
+**Autores:** David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas</br>
 **Responsable:** Dr. Luis Domingo Martínez Vázquez</br>
 **Institución:** Universidad Nacional Autónoma de México</br>
 **Dependencia:** Escuela Nacional de Estudios Superiores Unidad Juriquilla</br>
