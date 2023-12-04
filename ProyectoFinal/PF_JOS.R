@@ -103,9 +103,7 @@ ui <- navbarPage(" LupusLifeSymphony",
                  tabPanel("Síntomas",
                           titlePanel(strong("Síntomas experimentados por los pacientes a lo largo del tiempo")),
                           p(strong("Autores:"),"David Omar Beltrán Hernández, Joshelyn Yanori Mendoza Alfaro, Sofía Palacios Cuevas "),
-                          dashboardPage(
-                            dashboardHeader(title = "Reactive PNG Viewer"),
-                            dashboardSidebar(
+                            sidebarPanel(
                               selectInput("imageSelector", "Seleccione el tiempo de diagnóstico:",
                                           choices = c("0 años" = "www/0.png",
                                                       "medio año" = "www/0.5.png",
@@ -141,12 +139,65 @@ ui <- navbarPage(" LupusLifeSymphony",
                                                       "34 años"= "www/34.png",
                                                       "40 años" = "www/40.png"
                                                       )
-                              )
-                            ),
-                            dashboardBody(
+                              ), # FIN DE selectInput
+                              p(strong("Descripción de los síntomas:"),
+                              br(),
+                              p(strong("convulsion"),"Convulsión reciente (excluir si ha tenido convulsiones asociadas a desordenes metabólicos (como diabetes), por drogas, infecciones y fármacos."),
+                              br(),
+                              p(strong("psicosis"),"Perturbación grave de la percepción de la realidad, alucinación, incoherencia, disociación, hipoacusia (sordera parcial), catatonia (anomalidades motoras)."),
+                              br(),
+                              p(strong("sindrome_cereb_org"),"Síndrome cerebral orgánico. Alteración en función mental/intelectual. "),
+                              br(),
+                              p(strong("conciencia"),"Pérdida de la atención, incoherencia, insomnio, mareos."),
+                              br(),
+                              p(strong("alteracion_visual"),"Alteración visual, cambios en retina. Excluir hipertensión arterial. "),
+                              br(),
+                              p(strong("alteracion_nervios"),"Alteración de los nervios craneales. Neuropatía motora (daño a nivel nervioso). "),
+                              br(),
+                              p(strong("cefalea_lupica"),"Cefalea lúpica (dolor de cabeza), Cefalea intensa, persistente, migraña; no responde al tratamiento. "),
+                              br(),
+                              p(strong("accidente_cerebrovasc"),"Accidente cerebral vascular (Excluir hipertensión arterial, trombocitopenia (baja de plaquetas)). "),
+                              br(),
+                              p(strong("vasculitis"),"Vasculitis, ulceración, gangrena, nódulos blandos, dedos, infarto periungueal (fenómeno de Reynaud), hemorragias en llamas, biopsia (+). "),
+                              br(),
+                              p(strong("artritis"),"Artritis. Más de dos articulaciones dolorosas con inflamación. "),
+                              br(),
+                              p(strong("miositis"),"Miositis (inflamación muscular). Mialgia/debilidad proximal, CPK/aldolasa elevada, electromiografía alterada, biopsia (+). "),
+                              br(),
+                              p(strong("cilindros_urin"),"Cilindros urinarios. Hemáticos o granulares."),
+                              br(),
+                              p(strong("hematuria"),"Hematuria > 5g/c (Presencia de sangre en orina) "),
+                              br(),
+                              p(strong("proteinuria"),"Proteinuria > 0.5 mg/24 h o elevada. "),
+                              br(),
+                              p(strong("piuria"),"Piuria > 5 gb/c. "),
+                              br(),
+                              p(strong("erupcion"),"Erupción. Episodio nuevo o recurrente; erupción inflamatoria. "),
+                              br(),
+                              p(strong("alopecia"),"Alopecia (Pérdida de cabello). Nueva o recurrente. "),
+                              br(),
+                              p(strong("ulcera_mocosa"),"Úlcera mucosa, Idem, oral/nasal."),
+                              br(),
+                              p(strong("pleuresia"),"Pleuresia. Dolor pleurítico + frote, derrame, engrosamiento pleural. "),
+                              br(),
+                              p(strong("pericarditis"),"Pericarditis. Dolor pericárdico con al menos uno de los siguientes: roce, derrame, alteración en electrocardiograma o ecocardiograma. "),
+                              br(),
+                              p(strong("hipocomplem"),"Hipocomplementemia. Disminución CH50, C3, C4, (proteínas del complemento) por debajo de límite, inferior normal. "),
+                              br(),
+                              p(strong("aumento_union"),"Aumento unión ADN > 25% "),
+                              br(),
+                              p(strong("Fiebre"),"Fiebre > 38%"),
+                              br(),
+                              p(strong("trombocitopen"),"Trombocitopenia < 100,000/mm3 (Plaquetas bajas)"),
+                              br(),
+                              p(strong("leucopenia"),"Leucopenia < 3,000/mm3 (Leucocitos bajos). "),
+                              br(),
+                              p(strong("ninguno"),"Ninguno"),
+                            ), # FIN DE sidebarPanel
+                            mainPanel(
                               imageOutput("pngImage", width = "100%")
                             )
-                          )
+                          
                  )  # FIN DE TAB Síntomas
                  ) # FIN DE navbarPage
 
