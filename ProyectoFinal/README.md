@@ -9,4 +9,7 @@ En el presente proyecto se uiliza lenguaje de programación R para implementar u
 * La percepción que los paciententes de lupus entrevistados tienen sobre su calidad de vida
 * Los síntomas que los pacientes entrevistados han experimentado desde que fueron diagnosticados
 
-![prueba](https://github.com/JBSspc/EI7/blob/main/ProyectoFinal/img/graph-1a.png)
+### Recorrido por la app
+
+
+![](https://github.com/JBSspc/EI7/blob/main/ProyectoFinal/img/cv_tab.png)
